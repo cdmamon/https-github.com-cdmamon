@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopEase | Charlene Nicole D. Mamon</title>
+    <style>
+        :root {
+            --bg-body: #fff9fb;
+            --bg-container: #ffffff;
+            --bg-sidebar: #fdf2f5;
+            --text-main: #5a4a4a;
+            --text-accent: #d4818f;
+            --border-color: #ffd1dc;
+            --header-gradient: linear-gradient(135deg, #ffc0cb, #e6e6fa);
+            --card-shadow: rgba(0,0,0,0.05);
+            --input-bg: #ffffff;
+            --table-header: #ffd1dc;
+        }
+
+        body.dark-mode {
+            --bg-body: #1a1617;
+            --bg-container: #2d2426;
+            --bg-sidebar: #251e20;
+            --text-main: #fce4ec;
+            --text-accent: #ff9fb2;
+            --border-color: #4a3b3e;
+            --header-gradient: linear-gradient(135deg, #3d2b2e, #1a1617);
+            --card-shadow: rgba(0,0,0,0.6);
+            --input-bg: #3e3236;
+            --table-header: #4a3b3e;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        header { 
+            background: var(--header-gradient); 
+            color: var(--text-main); 
+            padding: 25px; 
+            text-align: center; 
+            border-bottom: 3px solid var(--border-color); 
+            position: relative; 
+        }
+
+        /* BOUTIQUE TOGGLE SWITCH */
+        .theme-switch-wrapper {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            display: flex;
+            align-items: center;
+        }
+        .theme-switch {
+            display: inline-block;
+            height: 28px;
+            position: relative;
+            width: 54px;
+        }
+        .theme-switch input { display: none; }
+        .slider {
+            background-color: var(--bg-sidebar);
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+            border-radius: 34px;
+            border: 2px solid var(--text-accent);
+        }
+        .slider:before {
+            background-color: var(--text-accent);
+            bottom: 3px;
+            content: "🌙";
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            height: 18px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 18px;
+            border-radius: 50%;
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+            content: "☀️";
+            background-color: #ffd700;
+        }
+
+        .container { display: flex; flex: 1; }
+        nav { width: 220px; background: var(--bg-sidebar); padding: 20px; border-right: 2px solid var(--border-color); }
+        nav ul { list-style: none; padding: 0; }
+        nav ul li { margin-bottom: 15px; }
+        nav ul li a { text-decoration: none; color: var(--text-accent); font-weight: bold; padding: 10px; display: block; border-radius: 20px; transition: 0.3s; position: relative; }
+        nav ul li a:hover { background: var(--border-color); color: var(--text-main); }
+        
+        #cart-count { background: var(--text-accent); color: white; font-size: 12px; padding: 2px 8px; border-radius: 10px; position: absolute; right: 10px; top: 10px; }
+        main { flex: 1; padding: 30px; }
+        h3 { color: var(--text-accent); border-bottom: 2px solid var(--border-color); padding-bottom: 5px; }
+        
+        /* CATALOG & QUICK VIEW EFFECT */
+        .products { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
+        .product-card { 
+            border: 1px solid var(--border-color); 
+            padding: 20px; 
+            width: 180px; 
+            text-align: center; 
+            border-radius: 15px; 
+            background: var(--bg-container); 
+            box-shadow: 0 4px 6px var(--card-shadow); 
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .product-card:hover { transform: translateY(-5px); }
+        
+        /* Quick View Overlay */
+        .quick-view {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(212, 129, 143, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: 0.3s;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+        }
+        .product-card:hover .quick-view { opacity: 1; }
+
+        form { display: flex; flex-direction: column; max-width: 450px; gap: 12px; background: var(--bg-container); padding: 25px; border-radius: 20px; border: 1px solid var(--border-color); }
+        input, textarea { padding: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: 10px; outline-color: var(--text-accent); }
+        button { background: var(--text-accent); color: white; border: none; padding: 12px; cursor: pointer; font-weight: bold; border-radius: 20px; transition: 0.3s; }
+        
+        .info-box { background: var(--bg-sidebar); padding: 20px; border-radius: 15px; border: 1px dashed var(--text-accent); line-height: 1.6; }
+        table.cart-table { width: 100%; border-collapse: collapse; background: var(--bg-container); border-radius: 10px; overflow: hidden; }
+        table.cart-table th { background: var(--table-header); padding: 12px; text-align: left; }
+        table.cart-table td { padding: 12px; border-bottom: 1px solid var(--border-color); }
+
+        #toast { visibility: hidden; min-width: 200px; background-color: var(--text-accent); color: white; text-align: center; border-radius: 20px; padding: 16px; position: fixed; z-index: 1000; left: 50%; bottom: 30px; transform: translateX(-50%); opacity: 0; transition: 0.5s; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+        
+        footer { background: var(--bg-sidebar); color: var(--text-main); text-align: center; padding: 15px; font-size: 14px; margin-top: auto; border-top: 1px solid var(--border-color); }
+        
+        section { display: none; }
+        section:target { display: block; }
+        #home { display: block; } 
+        :target ~ #home { display: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎀 ShopEase</h1>
+        <p><i>Your Pretty Online Shopping Partner</i></p>
+        <div class="theme-switch-wrapper">
+            <label class="theme-switch">
+                <input type="checkbox" id="mode-checkbox" onclick="toggleDarkMode()">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </header>
+    <div class="container">
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#catalog">Catalog</a></li>
+                <li><a href="#cart" onclick="renderCartPage()">Cart <span id="cart-count">0</span></a></li>
+                <li><a href="#about">About Me</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+        <main>
+            <section id="home">
+                <h3>Welcome, Gorgeous!</h3>
+                <p>Ready to treat yourself? Explore our <a href="#catalog">New Collection</a>.</p>
+                <div class="info-box">
+                    <p>✨ <strong>New Arrival:</strong> The Summer Pastel Collection is here! Get 10% off on your first order.</p>
+                </div>
+            </section>
+
+            <section id="catalog">
+                <h3>🌸 Summer Pastel Collection</h3>
+                <div class="products" id="product-list">
+                    <div class="product-card" data-category="apparel">
+                        <div class="quick-view" onclick="showToast('Feature coming soon: Detailed View!')">Quick View</div>
+                        👗<br><strong>Pastel Sundress</strong><br>$45.00<br>
+                        <button onclick="addToCart(1, 'Pastel Sundress', 45)">Add to Cart</button>
+                    </div>
+                    <div class="product-card" data-category="apparel">
+                        <div class="quick-view" onclick="showToast('Feature coming soon: Detailed View!')">Quick View</div>
+                        👒<br><strong>Straw Ribbon Hat</strong><br>$25.00<br>
+                        <button onclick="addToCart(2, 'Straw Ribbon Hat', 25)">Add to Cart</button>
+                    </div>
+                    <div class="product-card" data-category="beauty">
+                        <div class="quick-view" onclick="showToast('Feature coming soon: Detailed View!')">Quick View</div>
+                        ✨<br><strong>Shimmer Lip Gloss</strong><br>$15.00<br>
+                        <button onclick="addToCart(4, 'Shimmer Lip Gloss', 15)">Add to Cart</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="cart">
+                <h3>🛒 Your Shopping Cart</h3>
+                <div id="empty-cart-msg" style="display:none; text-align:center; padding:20px;">Your cart is empty, beauty! 🛍️</div>
+                <table class="cart-table" id="cart-table">
+                    <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Action</th></tr></thead>
+                    <tbody id="cart-body"></tbody>
+                </table>
+                <div style="text-align: right; margin-top: 20px; font-size: 1.5em; color: var(--text-accent); font-weight: bold;">
+                    Total: $<span id="cart-total-display">0.00</span>
+                </div>
+                <button id="checkout-btn" onclick="window.location.hash='payment'" style="width: 100%; margin-top:10px;">Proceed to Payment</button>
+            </section>
+
+            <section id="payment">
+                <h3>💳 Payment & Delivery</h3>
+                <form onsubmit="processTransaction(event)">
+                    <input type="text" id="pay-name" placeholder="Recipient Name" required>
+                    <textarea id="pay-address" placeholder="Complete Delivery Address" rows="2" required></textarea>
+                    <button type="submit">Confirm Order</button>
+                </form>
+            </section>
+
+            <section id="confirmation">
+                <div class="info-box" style="text-align: center;">
+                    <h2 style="color: var(--text-accent);">Order Placed!</h2>
+                    <p>Thank you, <span id="receipt-name"></span>!</p>
+                    <p><strong>Order ID:</strong> #SE-<span id="receipt-id"></span></p>
+                    <hr style="border:1px dashed var(--text-accent)">
+                    <p style="font-weight: bold;">Total Paid: $<span id="receipt-total"></span></p>
+                    <button onclick="window.location.hash='home'">Back to Home</button>
+                </div>
+            </section>
+
+            <section id="about">
+                <h3>About Me</h3>
+                <div class="info-box">
+                    <p>Hi! I'm <strong>Charlene Nicole D. Mamon</strong>. ShopEase is my vision of a boutique shopping experience.</p>
+                </div>
+            </section>
+
+            <section id="contact">
+                <h3>Contact Us</h3>
+                <form onsubmit="event.preventDefault(); showToast('Message Sent!')">
+                    <input type="email" placeholder="Email Address" required>
+                    <textarea placeholder="Message..." rows="4" required></textarea>
+                    <button type="submit">Send Message</button>
+                </form>
+            </section>
+        </main>
+    </div>
+    <footer>
+        <p>&copy; 2026 ShopEase | Charlene Nicole D. Mamon</p>
+    </footer>
+    <div id="toast">Added!</div>
+
+    <script>
+        // THEME LOGIC
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('mode-checkbox').checked = true;
+        }
+
+        // CART LOGIC
+        let cart = JSON.parse(localStorage.getItem('shopease_cart')) || [];
+        updateCartCount();
+
+        function addToCart(id, name, price) {
+            let item = cart.find(i => i.id === id);
+            if (item) item.qty++; else cart.push({ id, name, price, qty: 1 });
+            saveCart();
+            showToast("Added to cart! ✨");
+        }
+
+        function saveCart() {
+            localStorage.setItem('shopease_cart', JSON.stringify(cart));
+            updateCartCount();
+        }
+
+        function updateCartCount() {
+            document.getElementById('cart-count').innerText = cart.reduce((s, i) => s + i.qty, 0);
+        }
+
+        function renderCartPage() {
+            const tbody = document.getElementById('cart-body');
+            tbody.innerHTML = '';
+            let total = 0;
+            if (cart.length === 0) {
+                document.getElementById('cart-table').style.display = 'none';
+                document.getElementById('checkout-btn').style.display = 'none';
+                document.getElementById('empty-cart-msg').style.display = 'block';
+            } else {
+                document.getElementById('cart-table').style.display = 'table';
+                document.getElementById('checkout-btn').style.display = 'block';
+                document.getElementById('empty-cart-msg').style.display = 'none';
+                cart.forEach(i => {
+                    total += i.price * i.qty;
+                    tbody.innerHTML += 
+;
+                });
+            }
+            document.getElementById('cart-total-display').innerText = total.toFixed(2);
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(i => i.id !== id);
+            saveCart();
+            renderCartPage();
+        }
+
+        function processTransaction(e) {
+            e.preventDefault();
+            const name = document.getElementById('pay-name').value;
+            const total = cart.reduce((s, i) => s + (i.price*i.qty), 0).toFixed(2);
+            document.getElementById('receipt-name').innerText = name;
+            document.getElementById('receipt-id').innerText = Math.floor(Math.random() * 90000) + 10000;
+            document.getElementById('receipt-total').innerText = total;
+            cart = []; saveCart();
+            window.location.hash = "confirmation";
+        }
+
+        function showToast(msg) {
+            const x = document.getElementById("toast");
+            x.innerText = msg; x.className = "show";
+            setTimeout(() => x.className = "", 3000);
+        }
+    </script>
+</body>
+</html>
