@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopEase | Charlene Nicole D. Mamon</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-body: #fff9fb;
+            --bg-container: #ffffff;
+            --bg-sidebar: #fdf2f5;
+            --text-main: #5a4a4a;
+            --text-accent: #d4818f;
+            --border-color: #ffd1dc;
+            --header-gradient: linear-gradient(135deg, #ffc0cb, #e6e6fa);
+            --card-shadow: rgba(0,0,0,0.05);
+            --input-bg: #ffffff;
+            --table-header: #ffd1dc;
+        }
+
+        .dark-mode {
+            --bg-body: #1a1617;
+            --bg-container: #2d2426;
+            --bg-sidebar: #251e20;
+            --text-main: #fce4ec;
+            --text-accent: #ff9fb2;
+            --border-color: #4a3b3e;
+            --header-gradient: linear-gradient(135deg, #3d2b2e, #1a1617);
+            --card-shadow: rgba(0,0,0,0.6);
+            --input-bg: #3e3236;
+            --table-header: #4a3b3e;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg-body); color: var(--text-main); transition: 0.3s ease; }
+        header { background: var(--header-gradient); padding: 25px; text-align: center; border-bottom: 3px solid var(--border-color); position: relative; }
+        
+        .container { display: flex; min-height: 85vh; }
+        nav { width: 220px; background: var(--bg-sidebar); padding: 20px; border-right: 2px solid var(--border-color); }
+        nav ul { list-style: none; padding: 0; }
+        nav li { margin-bottom: 10px; }
+        .nav-btn { background: none; border: none; color: var(--text-accent); font-weight: bold; padding: 10px; width: 100%; text-align: left; cursor: pointer; border-radius: 20px; transition: 0.3s; position: relative; font-family: inherit; }
+        .nav-btn:hover, .nav-btn.active { background: var(--border-color); color: var(--text-main); }
+
+        main { flex: 1; padding: 30px; }
+        .products { display: flex; gap: 20px; flex-wrap: wrap; justify-content: flex-start; }
+        .product-card { border: 1px solid var(--border-color); padding: 20px; width: 200px; text-align: center; border-radius: 15px; background: var(--bg-container); box-shadow: 0 4px 6px var(--card-shadow); transition: 0.3s; }
+        .product-card:hover { transform: translateY(-5px); border-color: var(--text-accent); }
+        .product-icon { font-size: 3rem; margin-bottom: 10px; }
+        
+        .action-btn { background: var(--text-accent); color: white; border: none; padding: 12px; cursor: pointer; font-weight: bold; border-radius: 20px; width: 100%; margin-top: 10px; transition: 0.2s; }
+        .action-btn:hover { opacity: 0.8; filter: brightness(1.1); }
+
+        .info-box { background: var(--bg-sidebar); padding: 20px; border-radius: 15px; border: 1px dashed var(--text-accent); margin-bottom: 20px; }
+        .form-input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); box-sizing: border-box; }
+        
+        #toast { visibility: hidden; background: var(--text-accent); color: white; padding: 16px; position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); border-radius: 20px; transition: 0.5s; z-index: 1000; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        .theme-toggle { position: absolute; top: 25px; right: 25px; cursor: pointer; font-size: 1.5rem; border: none; background: none; }
+        
+        .auth-container { max-width: 450px; margin: 20px auto; background: var(--bg-container); padding: 30px; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px var(--card-shadow); }
+        .profile-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+        footer { text-align: center; padding: 20px; border-top: 1px solid var(--border-color); opacity: 0.8; }
+        
+        .student-badge { background: #ffeb3b; color: #333; padding: 2px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; vertical-align: middle; margin-left: 5px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [view, setView] = useState('home');
+            const [isDark, setIsDark] = useState(false);
+            const [cart, setCart] = useState([]);
+            const [toast, setToast] = useState({ show: false, msg: '' });
+            
+            // Auth States
+            const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem('shopease_user')) || null);
+            const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', mobile: '', address: '' });
+            const [loginData, setLoginData] = useState({ email: '', password: '' });
+
+            // Catalog Data - Updated to "Student Prices" (Budget friendly)
+            const products = [
+                { id: 1, name: 'Basic Cotton Tee', price: 150, icon: '👕', desc: 'Everyday campus wear' },
+                { id: 2, name: 'Minimalist Notebook', price: 85, icon: '📓', desc: '80 pages, aesthetic' },
+                { id: 3, name: 'Gel Pen Set', price: 45, icon: '🖊️', desc: 'Smooth black ink' },
+                { id: 4, name: 'Canvas Tote Bag', price: 120, icon: '👜', desc: 'Fits your 13" laptop' },
+                { id: 5, name: 'Pastel Highlighters', price: 65, icon: '🖍️', desc: 'Pack of 4 colors' },
+                { id: 6, name: 'Eco-Friendly Bottle', price: 199, icon: '🍶', desc: 'Hydration on a budget' }
+            ];
+
+            const formatPhp = (val) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(val);
+
+            const showToast = (msg) => {
+                setToast({ show: true, msg });
+                setTimeout(() => setToast({ show: false, msg: '' }), 3000);
+            };
+
+            const addToCart = (product) => {
+                setCart([...cart, product]);
+                showToast(`${product.name} added to cart! 🛍️`);
+            };
+
+            const handleSignUp = (e) => {
+                e.preventDefault();
+                if(formData.password !== formData.confirmPassword) return showToast("Passwords do not match!");
+                localStorage.setItem('shopease_db_user', JSON.stringify(formData));
+                showToast("Account created! You can now login. ✨");
+                setView('login');
+            };
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                const storedUser = JSON.parse(localStorage.getItem('shopease_db_user'));
+                if(storedUser && storedUser.email === loginData.email && storedUser.password === loginData.password) {
+                    setCurrentUser(storedUser);
+                    localStorage.setItem('shopease_user', JSON.stringify(storedUser));
+                    showToast(`Welcome back, ${storedUser.firstName}!`);
+                    setView('home');
+                } else {
+                    showToast("Invalid credentials or user not found.");
+                }
+            };
+
+            const handleLogout = () => {
+                setCurrentUser(null);
+                localStorage.removeItem('shopease_user');
+                showToast("Logged out. See you soon!");
+                setView('home');
+            };
+
+            return (
+                <div className={isDark ? 'dark-mode' : ''}>
+                    <div style={{background: 'var(--bg-body)', minHeight: '100vh'}}>
+                        <header>
+                            <button className="theme-toggle" onClick={() => setIsDark(!isDark)}>{isDark ? '☀️' : '🌙'}</button>
+                            <h1>🎀 ShopEase</h1>
+                            <p><i>Affordable Finds for Every Student</i></p>
+                        </header>
+
+                        <div className="container">
+                            <nav>
+                                <ul>
+                                    <li><button className={`nav-btn ${view==='home'?'active':''}`} onClick={()=>setView('home')}>Home</button></li>
+                                    <li><button className={`nav-btn ${view==='catalog'?'active':''}`} onClick={()=>setView('catalog')}>Catalog</button></li>
+                                    <li><button className={`nav-btn ${view==='cart'?'active':''}`} onClick={()=>setView('cart')}>Cart ({cart.length})</button></li>
+                                    {currentUser ? (
+                                        <>
+                                            <li><button className={`nav-btn ${view==='profile'?'active':''}`} onClick={()=>setView('profile')}>My Profile</button></li>
+                                            <li><button className="nav-btn" onClick={handleLogout}>Logout</button></li>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <li><button className={`nav-btn ${view==='login'?'active':''}`} onClick={()=>setView('login')}>Login</button></li>
+                                            <li><button className={`nav-btn ${view==='signup'?'active':''}`} onClick={()=>setView('signup')}>Sign Up</button></li>
+                                        </>
+                                    )}
+                                    <li><button className={`nav-btn ${view==='about'?'active':''}`} onClick={()=>setView('about')}>About Me</button></li>
+                                </ul>
+                            </nav>
+
+                            <main>
+                                {view === 'home' && (
+                                    <section>
+                                        <h3>Hello, {currentUser ? currentUser.firstName : 'Student'}!</h3>
+                                        <div className="info-box">
+                                            <p>🎓 <strong>Student Perk:</strong> All items in our catalog are price-capped for student budgets!</p>
+                                        </div>
+                                    </section>
+                                )}
+
+                                {view === 'catalog' && (
+                                    <section>
+                                        <h3>🌸 Student-Friendly Essentials</h3>
+                                        <div className="products">
+                                            {products.map(p => (
+                                                <div className="product-card" key={p.id}>
+                                                    <div className="product-icon">{p.icon}</div>
+                                                    <strong>{p.name}</strong><br/>
+                                                    <small style={{color: 'var(--text-accent)'}}>{p.desc}</small>
+                                                    <p>{formatPhp(p.price)} <span className="student-badge">SULIT</span></p>
+                                                    <button className="action-btn" onClick={() => addToCart(p)}>Add to Cart</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                )}
+
+                                {view === 'signup' && (
+                                    <div className="auth-container">
+                                        <h3>Join ShopEase</h3>
+                                        <form onSubmit={handleSignUp}>
+                                            <input className="form-input" placeholder="First Name" required onChange={e=>setFormData({...formData, firstName: e.target.value})} />
+                                            <input className="form-input" placeholder="Last Name" required onChange={e=>setFormData({...formData, lastName: e.target.value})} />
+                                            <input className="form-input" type="email" placeholder="School Email Address" required onChange={e=>setFormData({...formData, email: e.target.value})} />
+                                            <input className="form-input" type="password" placeholder="Password" required onChange={e=>setFormData({...formData, password: e.target.value})} />
+                                            <input className="form-input" type="password" placeholder="Confirm Password" required onChange={e=>setFormData({...formData, confirmPassword: e.target.value})} />
+                                            <input className="form-input" type="tel" placeholder="Mobile Number" required onChange={e=>setFormData({...formData, mobile: e.target.value})} />
+                                            <textarea className="form-input" placeholder="Dorm/Home Address" rows="2" required onChange={e=>setFormData({...formData, address: e.target.value})}></textarea>
+                                            <button className="action-btn" type="submit">Create Account</button>
+                                        </form>
+                                    </div>
+                                )}
+
+                                {view === 'login' && (
+                                    <div className="auth-container">
+                                        <h3>Student Login</h3>
+                                        <form onSubmit={handleLogin}>
+                                            <input className="form-input" type="email" placeholder="Email Address" required onChange={e=>setLoginData({...loginData, email: e.target.value})} />
+                                            <input className="form-input" type="password" placeholder="Password" required onChange={e=>setLoginData({...loginData, password: e.target.value})} />
+                                            <button className="action-btn" type="submit">Sign In</button>
+                                        </form>
+                                    </div>
+                                )}
+
+                                {view === 'profile' && currentUser && (
+                                    <div className="auth-container" style={{maxWidth: '550px'}}>
+                                        <h3>Student Profile</h3>
+                                        <div className="info-box">
+                                            <div className="profile-row"><strong>Name:</strong> <span>{currentUser.firstName} {currentUser.lastName}</span></div>
+                                            <div className="profile-row"><strong>Email:</strong> <span>{currentUser.email}</span></div>
+                                            <div className="profile-row"><strong>Mobile:</strong> <span>{currentUser.mobile}</span></div>
+                                            <div className="profile-row"><strong>Address:</strong> <span>{currentUser.address}</span></div>
+                                        </div>
+                                        <button className="action-btn" onClick={()=>setView('catalog')}>Go to Catalog</button>
+                                    </div>
+                                )}
+
+                                {view === 'cart' && (
+                                    <section>
+                                        <h3>🛒 My Bag</h3>
+                                        {cart.length === 0 ? <p>Your bag is empty. Check the catalog for budget finds!</p> : (
+                                            <div className="info-box">
+                                                {cart.map((item, index) => (
+                                                    <div key={index} className="profile-row">
+                                                        <span>{item.icon} {item.name}</span>
+                                                        <span>{formatPhp(item.price)}</span>
+                                                    </div>
+                                                ))}
+                                                <div style={{textAlign: 'right', marginTop: '15px'}}>
+                                                    <h4>Total: {formatPhp(cart.reduce((sum, item) => sum + item.price, 0))}</h4>
+                                                    <button className="action-btn" style={{width: '200px'}} onClick={()=>showToast("Order placed successfully! 💸")}>Checkout</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </section>
+                                )}
+
+                                {view === 'about' && (
+                                    <section className="info-box">
+                                        <h3>About the Developer</h3>
+                                        <p>Developed by <strong>Charlene Nicole D. Mamon</strong>. This project showcases a student-friendly e-commerce interface built with React.</p>
+                                    </section>
+                                )}
+                            </main>
+                        </div>
+                        <footer><p>&copy; 2026 ShopEase | Charlene Nicole D. Mamon</p></footer>
+                        <div id="toast" className={toast.show ? 'show' : ''}>{toast.msg}</div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
