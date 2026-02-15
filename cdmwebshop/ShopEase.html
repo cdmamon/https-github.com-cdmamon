@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopEase | Charlene Nicole D. Mamon</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-body: #fff9fb;
+            --bg-container: #ffffff;
+            --bg-sidebar: #fdf2f5;
+            --text-main: #5a4a4a;
+            --text-accent: #d4818f;
+            --border-color: #ffd1dc;
+            --header-gradient: linear-gradient(135deg, #ffc0cb, #e6e6fa);
+            --card-shadow: rgba(0,0,0,0.05);
+            --input-bg: #ffffff;
+            --table-header: #ffd1dc;
+        }
+
+        .dark-mode {
+            --bg-body: #1a1617;
+            --bg-container: #2d2426;
+            --bg-sidebar: #251e20;
+            --text-main: #fce4ec;
+            --text-accent: #ff9fb2;
+            --border-color: #4a3b3e;
+            --header-gradient: linear-gradient(135deg, #3d2b2e, #1a1617);
+            --card-shadow: rgba(0,0,0,0.6);
+            --input-bg: #3e3236;
+            --table-header: #4a3b3e;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg-body); color: var(--text-main); transition: 0.3s ease; }
+        header { background: var(--header-gradient); padding: 25px; text-align: center; border-bottom: 3px solid var(--border-color); position: relative; }
+        
+        .container { display: flex; min-height: 85vh; }
+        nav { width: 220px; background: var(--bg-sidebar); padding: 20px; border-right: 2px solid var(--border-color); }
+        nav ul { list-style: none; padding: 0; }
+        nav li { margin-bottom: 10px; }
+        .nav-btn { background: none; border: none; color: var(--text-accent); font-weight: bold; padding: 10px; width: 100%; text-align: left; cursor: pointer; border-radius: 20px; transition: 0.3s; position: relative; font-family: inherit; }
+        .nav-btn:hover, .nav-btn.active { background: var(--border-color); color: var(--text-main); }
+
+        main { flex: 1; padding: 30px; }
+        .products { display: flex; gap: 20px; flex-wrap: wrap; }
+        .product-card { border: 1px solid var(--border-color); padding: 20px; width: 180px; text-align: center; border-radius: 15px; background: var(--bg-container); box-shadow: 0 4px 6px var(--card-shadow); transition: 0.3s; }
+        .product-card:hover { transform: translateY(-5px); }
+
+        .payment-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .pay-option { border: 2px solid var(--border-color); background: var(--bg-container); padding: 10px; border-radius: 12px; cursor: pointer; text-align: center; font-weight: bold; }
+        .pay-option.selected { border-color: var(--text-accent); background: var(--bg-sidebar); }
+
+        .action-btn { background: var(--text-accent); color: white; border: none; padding: 10px; cursor: pointer; font-weight: bold; border-radius: 20px; width: 100%; margin-top: 10px; }
+        .action-btn:disabled { opacity: 0.5; }
+
+        .info-box { background: var(--bg-sidebar); padding: 20px; border-radius: 15px; border: 1px dashed var(--text-accent); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: var(--table-header); padding: 12px; }
+        td { padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; }
+
+        .form-input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); box-sizing: border-box; }
+        
+        #toast { visibility: hidden; background: var(--text-accent); color: white; padding: 16px; position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); border-radius: 20px; transition: 0.5s; z-index: 1000; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        .theme-toggle { position: absolute; top: 25px; right: 25px; cursor: pointer; font-size: 1.5rem; border: none; background: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [view, setView] = useState('home');
+            const [isDark, setIsDark] = useState(false);
+            const [cart, setCart] = useState([]);
+            const [promo, setPromo] = useState('');
+            const [discount, setDiscount] = useState(0);
+            const [paymentMethod, setPaymentMethod] = useState('');
+            const [shipping, setShipping] = useState({ name: '', address: '' });
+            const [toast, setToast] = useState({ show: false, msg: '' });
+            const [receipt, setReceipt] = useState(null);
+
+            const products = [
+                { id: 1, name: 'Pastel Sundress', price: 2250, icon: '👗' },
+                { id: 2, name: 'Straw Ribbon Hat', price: 1250, icon: '👒' },
+                { id: 3, name: 'Shimmer Lip Gloss', price: 750, icon: '✨' }
+            ];
+
+            const formatPhp = (val) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(val);
+
+            const showToast = (msg) => {
+                setToast({ show: true, msg });
+                setTimeout(() => setToast({ show: false, msg: '' }), 3000);
+            };
+
+            const addToCart = (p) => {
+                const exist = cart.find(x => x.id === p.id);
+                if (exist) setCart(cart.map(x => x.id === p.id ? {...x, qty: x.qty + 1} : x));
+                else setCart([...cart, {...p, qty: 1}]);
+                showToast("Added to cart! ✨");
+            };
+
+            const applyPromo = () => {
+                if (promo.toUpperCase() === 'SAGE10') {
+                    setDiscount(0.10);
+                    showToast("10% Promo Applied!");
+                } else showToast("Invalid Promo Code");
+            };
+
+            const subtotal = cart.reduce((a, b) => a + (b.price * b.qty), 0);
+            const total = subtotal - (subtotal * discount);
+
+            const handleOrder = (e) => {
+                e.preventDefault();
+                if (!paymentMethod) return showToast("Select a payment method!");
+                setReceipt({ name: shipping.name, total, method: paymentMethod, id: Math.floor(Math.random() * 90000) + 10000 });
+                setCart([]); setView('confirmation');
+            };
+
+            return (
+                <div className={isDark ? 'dark-mode' : ''}>
+                    <div style={{background: 'var(--bg-body)', minHeight: '100vh'}}>
+                        <header>
+                            <button className="theme-toggle" onClick={() => setIsDark(!isDark)}>{isDark ? '☀️' : '🌙'}</button>
+                            <h1>🎀 ShopEase</h1>
+                            <p><i>Your Pretty Online Shopping Partner</i></p>
+                        </header>
+
+                        <div className="container">
+                            <nav>
+                                <ul>
+                                    <li><button className={`nav-btn ${view==='home'?'active':''}`} onClick={()=>setView('home')}>Home</button></li>
+                                    <li><button className={`nav-btn ${view==='catalog'?'active':''}`} onClick={()=>setView('catalog')}>Catalog</button></li>
+                                    <li><button className={`nav-btn ${view==='cart'?'active':''}`} onClick={()=>setView('cart')}>Cart ({cart.reduce((a,b)=>a+b.qty,0)})</button></li>
+                                    <li><button className={`nav-btn ${view==='about'?'active':''}`} onClick={()=>setView('about')}>About Me</button></li>
+                                </ul>
+                            </nav>
+
+                            <main>
+                                {view === 'home' && (
+                                    <section>
+                                        <h3>Welcome, Gorgeous!</h3>
+                                        <div className="info-box">
+                                            <p>✨ <strong>New Arrival:</strong> The Summer Pastel Collection is here! Get 10% off with code <b>SAGE10</b>.</p>
+                                        </div>
+                                    </section>
+                                )}
+
+                                {view === 'catalog' && (
+                                    <section>
+                                        <h3>🌸 Summer Pastel Collection</h3>
+                                        <div className="products">
+                                            {products.map(p => (
+                                                <div className="product-card" key={p.id}>
+                                                    <div style={{fontSize: '3rem'}}>{p.icon}</div>
+                                                    <strong>{p.name}</strong><br/>
+                                                    {formatPhp(p.price)}
+                                                    <button className="action-btn" onClick={() => addToCart(p)}>Add to Cart</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                )}
+
+                                {view === 'cart' && (
+                                    <section>
+                                        <h3>🛒 Shopping Cart</h3>
+                                        {cart.length === 0 ? <p>Your bag is empty, beauty! 🛍️</p> : (
+                                            <div style={{maxWidth: '600px'}}>
+                                                <table>
+                                                    <thead><tr><th>Item</th><th>Qty</th><th>Price</th></tr></thead>
+                                                    <tbody>
+                                                        {cart.map(i => (
+                                                            <tr key={i.id}><td>{i.name}</td><td>{i.qty}</td><td>{formatPhp(i.price * i.qty)}</td></tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                                <div style={{textAlign: 'right', marginTop: '20px'}}>
+                                                    <input className="form-input" style={{width: '150px'}} placeholder="Promo Code" onChange={(e)=>setPromo(e.target.value)} />
+                                                    <button className="action-btn" style={{width: '80px', marginLeft: '10px'}} onClick={applyPromo}>Apply</button>
+                                                    <h3>Total: {formatPhp(total)}</h3>
+                                                    <button className="action-btn" onClick={() => setView('payment')}>Proceed to Payment</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </section>
+                                )}
+
+                                {view === 'payment' && (
+                                    <section style={{maxWidth: '500px'}}>
+                                        <h3>💳 Payment & Delivery</h3>
+                                        <form onSubmit={handleOrder}>
+                                            <input className="form-input" placeholder="Recipient Name" required onChange={e=>setShipping({...shipping, name: e.target.value})} />
+                                            <textarea className="form-input" placeholder="Complete Address" rows="3" required onChange={e=>setShipping({...shipping, address: e.target.value})} />
+                                            <div className="payment-grid">
+                                                {['GCash', 'Maya', 'COD'].map(m => (
+                                                    <div key={m} className={`pay-option ${paymentMethod===m?'selected':''}`} onClick={()=>setPaymentMethod(m)}>{m}</div>
+                                                ))}
+                                            </div>
+                                            <button className="action-btn" type="submit">Confirm Order ({paymentMethod || 'Select Method'})</button>
+                                        </form>
+                                    </section>
+                                )}
+
+                                {view === 'confirmation' && receipt && (
+                                    <section className="info-box" style={{textAlign: 'center'}}>
+                                        <h2 style={{color: 'var(--text-accent)'}}>Order Placed!</h2>
+                                        <p>Thank you, <b>{receipt.name}</b>!</p>
+                                        <p>Order ID: #SE-{receipt.id}</p>
+                                        <p>Total Paid via {receipt.method}: <b>{formatPhp(receipt.total)}</b></p>
+                                        <button className="action-btn" onClick={() => setView('home')}>Back to Home</button>
+                                    </section>
+                                )}
+
+                                {view === 'about' && (
+                                    <section className="info-box">
+                                        <h3>About Me</h3>
+                                        <p>Hi! I'm <strong>Charlene Nicole D. Mamon</strong>. ShopEase is my vision of a boutique shopping experience.</p>
+                                    </section>
+                                )}
+                            </main>
+                        </div>
+                        <footer><p>&copy; 2026 ShopEase | Charlene Nicole D. Mamon</p></footer>
+                        <div id="toast" className={toast.show ? 'show' : ''}>{toast.msg}</div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
